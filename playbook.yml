@@ -1,0 +1,19 @@
+---
+- name: "Laboratorio de Facts"
+  hosts: nodo01
+  tasks:
+    - name: "Imprimir facts del nodo"
+      debug:
+        var: ansible_facts
+    - name: "Crear fichero"
+      file:
+        path: "/tmp/datos_nodo01.txt"
+        state: touch
+        mode: 0655
+    - name: "Anadir datos al fichero"
+      lineinfile:
+        path: "/tmp/datos_nodo01.txt"
+        line: "{{ ansible_facts['interfaces'] }}"
+        create: yes
+#      loop: "{{ ansible_facts['interfaces']|dict2items }}"
+...
