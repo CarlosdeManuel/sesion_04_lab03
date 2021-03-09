@@ -7,13 +7,19 @@
         var: ansible_facts
     - name: "Crear fichero"
       file:
-        path: "/tmp/datos_nodo01.txt"
+        path: "/tmp/datos_{{ ansible_facts['hostname'] }}.txt"
         state: touch
         mode: 0655
-    - name: "Anadir datos al fichero"
+    - name: "Anadir datos al fichero de {{ ansible_facts['hostname'] }}"
       lineinfile:
-        path: "/tmp/datos_nodo01.txt"
-        line: "{{ ansible_facts['interfaces'] }}"
+        path: "/tmp/datos_{{ ansible_facts['hostname'] }}.txt"
+        line: |
+          - Interfaz: "{{ ansible_facts['interfaces'] }}"
+          - IP: {{ ansible_facts[item]["ipv4"]["address"] }}
+          - Mac address: {{ ansible_facts["default_ipv4"]["macaddress"] }}
+          - Gateway: {{ ansible_facts["default_ipv4"]["gateway"] }}
+          - Netmask: {{ ansible_facts[item]["ipv4"]["netmask"] }}
         create: yes
-#      loop: "{{ ansible_facts['interfaces']|dict2items }}"
+      loop: "{{ ansible_facts['interfaces'] }}"
+# Duda: cuando usar dict2items?
 ...
