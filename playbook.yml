@@ -14,12 +14,67 @@
       lineinfile:
         path: "/tmp/datos_{{ ansible_facts['hostname'] }}.txt"
         line: |
-          - Interfaz: "{{ ansible_facts['interfaces'] }}"
           - IP: {{ ansible_facts[item]["ipv4"]["address"] }}
           - Mac address: {{ ansible_facts["default_ipv4"]["macaddress"] }}
           - Gateway: {{ ansible_facts["default_ipv4"]["gateway"] }}
           - Netmask: {{ ansible_facts[item]["ipv4"]["netmask"] }}
         create: yes
       loop: "{{ ansible_facts['interfaces'] }}"
-# Duda: cuando usar dict2items?
+# Lista de dispositivos de almacenamiento con su capacidad
+    - name: "Anadir los datos de almacenamiento al archivo de {{ ansible_facts['hostname'] }}"
+      lineinfile:
+        path: "/tmp/datos_{{ ansible_facts['hostname'] }}.txt"
+        line: |
+         - Dispositivo: {{ item.key }}
+         - Capacidad: {{ item.value.size }}         
+      loop: "{{ ansible_facts['devices']|dict2items }}"
+
+    - name: "Crea la partición en /dev/sdb"
+      parted:
+        device: "/dev/sdb"
+        number: 1
+        part_end: "2GB"
+        state: present
+
+    - name: "Crear Volumen Group" 
+      lvg:
+        vg: "vg_prueba"
+        pvs: "/dev/sdb1"
+
+# borrar el lv para que no de problemas
+    - name: "Borrar Logical volumen"
+      lvol:
+        vg: "vg_prueba"
+        lv: "lv_prueba"
+        state: absent
+        force: yes
+
+    - name: "Crear Logical Volumen de 2GB" 
+      lvol:
+        vg: "vg_prueba"
+        lv: "lv_prueba"
+        size: 100%FREE
+        state: present
+        force: yes
+
+    - name: "Crear XFS filesystem"
+      filesystem:
+        fstype: xfs
+        dev: "/dev/sdb1"
+        force: yes
+
+    - name: "Montar" 
+      mount:
+        path: "/mnt/prueba"
+        src: "/dev/sdb1"
+        fstype: xfs
+        state: present
+
+    - name: "Anadir los datos de almacenamiento al archivo de {{ ansible_facts['hostname'] }}"
+      lineinfile:
+        path: "/tmp/datos_{{ ansible_facts['hostname'] }}.txt"
+        line: |
+         - Dispositivo: {{ item.key }}
+         - Capacidad: {{ item.value.size }}         
+      loop: "{{ ansible_facts['devices']|dict2items }}"
 ...
