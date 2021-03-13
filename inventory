@@ -2,6 +2,6 @@ master
 nodo01
 nodo02
 
-[nodos:children]
+[nodos]
 nodo01
 nodo02
